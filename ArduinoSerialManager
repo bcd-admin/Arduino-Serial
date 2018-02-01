@@ -1,0 +1,56 @@
+#!/bin/bash
+
+launchIDE() {
+cd /programs/arduino
+bash arduino
+}
+
+sendCommands() {
+echo "Enter Command: "
+read command
+echo "Sending to default serial port.."
+echo $command >> /dev/ttyACM0
+echo "Done."
+
+veiwOutput() {
+echo "Opening default serial port."
+x-terminal-emulator -e cat /dev/ttyACM0
+}
+
+killProgram() {
+pidof ArduinoSerialManager 1>&2> /dev/null
+case $? in
+0);;
+1) echo "Command not running >> /programs/arduino/Serial/log.txt"
+esac
+pidof ArduinoSerialManager | kill
+}
+#user must be root to connect to the Arduino serial port
+id=$(id -u)
+case $id in
+0);;
+1000) echo "A normal user may not connect to the Arduino. Only root can do this"; exit 127;;
+esac
+#Main program
+echo "Warning: It is often considered unsafe to directly send commands to the Arduino without using the IDE. Continue?"
+read continue
+case $continue in
+[Yy]);;
+[Nn]) launchIDE;;
+esac
+tput cup 0 0; tput clear
+tput cup 2 10; echo "Arduino Serial Connection Manager"
+tput cup 3 10; echo "---------------------------------"
+tput cup 4 10; echo "Options"
+tput cup 5 10; echo "c) Send serial commands to the Arduino over the serial port."
+tput cup 6 10; echo "v) View the output of the Serial port in a new window"
+tput cup 7 10; echo "q) Quit"
+tput cup 8 10; echo "Q) Force quit: Use only if program hangs"
+tput cup 9 10; echo "Choice: "
+tput cup 9 20; read c
+case $c in
+c) sendCommands;;
+v) veiwOutput;;
+q) exit 2;;
+Q) killProgram;;
+esac
